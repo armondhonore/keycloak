@@ -18,7 +18,7 @@ application:
       KC_HTTP_ENABLED: "true"
       KC_PROXY: edge
   - name: postgres
-    image: postgres:16-alpine
+    image: mirror.gcr.io/library/postgres:16-alpine
     servicePorts:
     - 5432
     vars:
