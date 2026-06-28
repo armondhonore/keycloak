@@ -12,9 +12,10 @@ application:
       servicePorts:
         - 8080
       vars:
-        # start-dev uses the embedded H2 DB — do NOT set KC_DB (postgres with no
-        # DB pod was why startup failed). Health/metrics on; HTTP enabled and
-        # proxy/hostname relaxed for the edge (also baked into ENTRYPOINT).
+        # Force the embedded H2 dev DB. The base keycloak:26.0 image has a
+        # persisted db=postgres build option, so without this start-dev tries a
+        # non-existent postgres and crashes. dev-file = no external DB pod.
+        KC_DB: "dev-file"
         KC_HEALTH_ENABLED: "true"
         KC_METRICS_ENABLED: "true"
         KC_HTTP_ENABLED: "true"
