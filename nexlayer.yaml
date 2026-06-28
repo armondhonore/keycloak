@@ -2,9 +2,8 @@ application:
   name: keycloak
   pods:
   - name: app
-    image: quay.io/keycloak/keycloak:latest
+    image: "# filled by pipeline"
     path: /
-    command: sh -c "/opt/keycloak/bin/kc.sh start-dev --http-enabled=true --http-port=8080 --hostname=https://relaxed-weasel-keycloak.cloud.nexlayer.ai --hostname-strict=false --proxy-headers=xforwarded"
     servicePorts:
     - 8080
     vars:
