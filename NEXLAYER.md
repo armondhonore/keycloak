@@ -1,117 +1,157 @@
 # Nexlayer — keycloak
 
-**Live:** [https://relaxed-weasel-keycloak.cloud.nexlayer.ai](https://relaxed-weasel-keycloak.cloud.nexlayer.ai)  
+<!-- nexlayer:meta version=1 analyzed=2026-06-28T01:14:29Z repo=https://github.com/armondhonore/keycloak branch=nexlayer -->
 
-**Runtime:**  · **Port:** auto-detected · **Deploy branch:** main
+> **For AI agents (Claude Code, Cursor, Gemini CLI, Copilot):**
+> This file is the **project context** for this Nexlayer deployment — tech stack, env vars, secrets, live URL.
+> For full platform detail (nexlayer.yaml schema, Dockerfile rules, CI/CD, task recipes) read **`nexlayer.skills`** in this repo.
+>
+> **Critical rules (full detail in `nexlayer.skills`):**
+> - Inter-pod refs: `${podName:port}` only — never `localhost` or bare hostnames
+> - Docker Hub images: prefix with `mirror.gcr.io/library/` — bare tags fail on the cluster
+> - Secrets: set in the Nexlayer dashboard — never commit to `nexlayer.yaml` or Dockerfile
+>
+> **This file:** `agent-managed` sections update automatically. `user-editable` sections (Local Development Setup, Nexlayer Deployment Plan, Build Notes) are yours — preserved across re-analysis.
 
----
+## Project Summary
+<!-- nexlayer:section agent-managed=project_summary -->
+Keycloak is an open-source Identity and Access Management (IAM) solution providing single sign-on, user federation, and fine-grained authorization for modern applications.
+<!-- nexlayer:end -->
 
-## How this deployment works
+## Technology Stack
+<!-- nexlayer:section agent-managed=tech_stack -->
+| Name | Kind | Version | Detected From |
+|------|------|---------|---------------|
+| Java | language | 17 | pom.xml |
+| Quarkus | framework | 3.33.2.1 | pom.xml |
+| Maven | build | 3.9.8 | pom.xml |
+<!-- nexlayer:end -->
 
-**keycloak** is deployed on [Nexlayer](https://nexlayer.ai) — a container-native
-platform where every push to `main` triggers a fully automated build-and-deploy
-pipeline with no infrastructure management required:
+## Repository Structure
+<!-- nexlayer:section agent-managed=structure_map -->
+- core/ — Core IAM logic and identity providers
+- services/ — Backend service implementations
+- quarkus/ — Quarkus-specific integration and deployment logic
+- distribution/ — Packaging and distribution scripts
+- themes/ — UI templates for login and account management
+- operator/ — Kubernetes operator for Keycloak lifecycle management
+<!-- nexlayer:end -->
 
-1. **AI analysis** — the Nexlayer agent reads your repo, understands your runtime,
-   dependencies, and project structure, then writes an optimised Dockerfile and
-   `nexlayer.yaml` tailored to your app.
-2. **Container build** — your image is built with Kaniko on Nexlayer's GPU cluster.
-   Build layer cache means subsequent builds are fast.
-3. **Deploy** — the image is deployed to a dedicated Nexlayer namespace.
-   A stable `*.cloud.nexlayer.ai` URL is ready within minutes.
-4. **Auto-fix loop** — if the build fails, the agent attempts up to 7 autonomous
-   repair attempts (patching the Dockerfile or nexlayer.yaml) before surfacing
-   the error. Most common build errors are resolved without human intervention.
-5. **CI/CD write-back** — a working GitHub Actions workflow (`.github/workflows/nexlayer.yml`)
-   is committed to your repo so every future push auto-deploys.
+## External Services Required
+<!-- nexlayer:section agent-managed=external_deps -->
+Services that must be configured separately (not deployed by Nexlayer):
 
----
+- Relational Database (PostgreSQL/MySQL/Oracle/MSSQL)
+<!-- nexlayer:end -->
 
-## Configuration files
+## Local Development Setup
+<!-- nexlayer:section user-editable=local_setup -->
+### Prerequisites
 
-### `nexlayer.yaml` — deployment manifest
+- OpenJDK 17
+- Maven 3.9.8
 
-Defines the pods (containers), ports, and environment that make up your app.
-The agent generates this; you can edit it freely.
+### Environment variables
+
+Copy `.env.example` to `.env.local` and fill in:
+
+```
+KC_DB=postgres
+KC_DB_URL=jdbc:postgresql://localhost:5432/keycloak
+KC_DB_USERNAME=keycloak
+KC_DB_PASSWORD=password
+KEYCLOAK_ADMIN=admin
+KEYCLOAK_ADMIN_PASSWORD=admin
+```
+
+### Steps
+
+1. `./mvnw clean install` — Build the project using the Maven wrapper
+2. `./mvnw quarkus:dev` — Start Keycloak in development mode via Quarkus
+
+<!-- nexlayer:end -->
+
+## Nexlayer Setup
+<!-- nexlayer:section agent-managed=nexlayer_setup -->
+### Pod Environment Variables
+
+| Pod | Variable | Value | Kind |
+|-----|----------|-------|------|
+| `keycloak` | `KC_DB` | `"postgres"` | plain |
+| `keycloak` | `KC_HEALTH_ENABLED` | `"true"` | plain |
+| `keycloak` | `KC_METRICS_ENABLED` | `"true"` | plain |
+| `keycloak` | `JAVA_OPTS` | `"-XX:MaxRAMPercentage=75.0 -XX:+UseContainerSupport"` | plain |
+
+### nexlayer.yaml
 
 ```yaml
 application:
   name: keycloak
   pods:
-  - name: app
-    image: quay.io/keycloak/keycloak:latest
-    path: /
-    command: sh -c "/opt/keycloak/bin/kc.sh start-dev --http-enabled=true --http-port=8080 --hostname=https://relaxed-weasel-keycloak.cloud.nexlayer.ai --hostname-strict=false --proxy-headers=xforwarded"
-    servicePorts:
-    - 8080
-    vars:
-      KC_DB: postgres
-      KC_DB_URL: "jdbc:postgresql://keycloak-postgres.pod:5432/keycloak"
-      KC_DB_USERNAME: keycloak
-      KC_DB_PASSWORD: "${POSTGRES_PASSWORD}"
-      KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: nexlayer2024
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: nexlayer2024
-  - name: postgres
-    image: mirror.gcr.io/library/postgres:16-alpine
-    servicePorts:
-    - 5432
-    vars:
-      POSTGRES_DB: keycloak
-      POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
-    volumes:
-    - name: keycloak-db
-      mountPath: /var/lib/postgresql/data
-      size: 5Gi
+    - name: keycloak
+      image: "registry.nexlayer.io/user_01kece1xyh817dwff7wnarhkxd/keycloak:9f0bca6-fix5"
+      path: /
+      servicePorts:
+        - 8080
+      vars:
+        KC_DB: "postgres"
+        KC_HEALTH_ENABLED: "true"
+        KC_METRICS_ENABLED: "true"
+        JAVA_OPTS: "-XX:MaxRAMPercentage=75.0 -XX:+UseContainerSupport"
 ```
 
-**Common edits:**
+<!-- nexlayer:end -->
 
-| Goal | What to change |
-|---|---|
-| Change exposed port | `servicePorts:` + `EXPOSE` in Dockerfile |
-| Add environment variable | `vars:` under the relevant pod |
-| Add a database (Postgres, MySQL, Redis) | New entry in `pods:`, then reference via `<podName>.pod:<port>` |
-| Change the URL slug / app name | `application.name:` |
-| Add a worker / background job | New pod with its own image and no `path:` |
+## Nexlayer Deployment Plan
+<!-- nexlayer:section user-editable=deployment_plan -->
+### Pod Topology
 
-### `Dockerfile` — container recipe
+| Pod | Image | Port | Role |
+|-----|-------|------|------|
+| keycloak | mirror.gcr.io/library/openjdk:17-slim | 8080 | web |
+| postgres | mirror.gcr.io/library/postgres:16-alpine | 5432 | database |
 
-Generated by the Nexlayer agent for your runtime. Edit it freely.
-The pipeline always uses whatever `Dockerfile` is in your repo — the agent
-only regenerates it if you delete it or on the very first deploy.
+### Deployment notes
 
-### `.github/workflows/nexlayer.yml` — CI/CD
+- Keycloak connects to the database pod using the address postgres.pod:5432
+- Images are sourced from mirror.gcr.io to comply with Nexlayer platform rules
+- Database is strictly separated into its own pod
 
-Triggers on:
-- **Push** to `main` → production redeploy
-- **Pull request** → preview deploy with a unique URL posted as a PR comment
-- **Manual** → run on demand from the Actions tab (no commit required)
+<!-- nexlayer:end -->
 
-The workflow authenticates with a **durable** `NEXLAYER_API_KEY` secret — it does
-not expire after 1 hour like GitHub's `GITHUB_TOKEN`.
+## Build Notes
+<!-- nexlayer:section user-editable=build_notes -->
+<!-- Add notes for future builds here — preserved across re-analysis -->
+<!-- nexlayer:end -->
 
----
+## Nexlayer Configuration
+<!-- nexlayer:section agent-managed=nexlayer_config -->
+**Last deployed:** 2026-06-28T01:49:52Z  
+**Live URL:** https://relaxed-weasel-keycloak.cloud.nexlayer.ai  
+**Runtime:**  · **Port:** auto-detected  
+**Deploy branch:** nexlayer  
 
-## Working with AI coding agents
+```yaml
+application:
+  name: keycloak
+  pods:
+    - name: keycloak
+      image: "registry.nexlayer.io/user_01kece1xyh817dwff7wnarhkxd/keycloak:9f0bca6-fix5"
+      path: /
+      servicePorts:
+        - 8080
+      vars:
+        KC_DB: "postgres"
+        KC_HEALTH_ENABLED: "true"
+        KC_METRICS_ENABLED: "true"
+        JAVA_OPTS: "-XX:MaxRAMPercentage=75.0 -XX:+UseContainerSupport"
+```
+<!-- nexlayer:end -->
 
-When asking Claude Code, Cursor, GitHub Copilot, or Gemini CLI to add features,
-include this context in your prompt:
-
-> *"This project is deployed on Nexlayer. The deployment manifest is `nexlayer.yaml`.
-> The container exposes port auto-detected. When adding a new service (database, cache,
-> worker), add it as a new pod in `nexlayer.yaml` and reference it with
-> `<podName>.pod:<port>` syntax. CI/CD runs on push to `main`."*
-
-The `nexlayer.skills` file in this repo gives agents structured guidance on the
-Nexlayer platform, including schema reference, common patterns, and anti-patterns.
-
----
-
-## Useful links
-
-- **Dashboard:** [nexlayer.ai](https://nexlayer.ai) — view deployments, logs, domains, API keys
-- **Agent:** [agent.nexlayer.com](https://agent.nexlayer.com) — chat interface + REST API
-- **Docs:** [nexlayer.ai/docs](https://nexlayer.ai/docs)
+## Build History
+<!-- nexlayer:section agent-managed=build_history -->
+| Date | Status | Notes |
+|------|--------|-------|
+| 2026-06-28T01:14:29Z | analyzed | initial repo analysis |
+| 2026-06-28T01:49:52Z | success | deployed https://relaxed-weasel-keycloak.cloud.nexlayer.ai |
+<!-- nexlayer:end -->
