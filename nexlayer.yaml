@@ -2,12 +2,27 @@ application:
   name: keycloak
   pods:
     - name: keycloak
-      image: "registry.nexlayer.io/user_01kece1xyh817dwff7wnarhkxd/keycloak:9f0bca6-fix5"
+      # Placeholder so the runner injects the freshly BUILT wrapper image (the
+      # thin FROM quay.io/keycloak/keycloak:26.0 image whose ENTRYPOINT bakes
+      # `start-dev --proxy-headers=xforwarded --hostname-strict=false`). A real
+      # image ref here would make the runner skip the build and deploy a stale
+      # image instead.
+      image: "# filled by pipeline"
       path: /
       servicePorts:
         - 8080
       vars:
-        KC_DB: "postgres"
+        # start-dev uses the embedded H2 DB — do NOT set KC_DB (postgres with no
+        # DB pod was why startup failed). Health/metrics on; HTTP enabled and
+        # proxy/hostname relaxed for the edge (also baked into ENTRYPOINT).
         KC_HEALTH_ENABLED: "true"
         KC_METRICS_ENABLED: "true"
-        JAVA_OPTS: "-XX:MaxRAMPercentage=75.0 -XX:+UseContainerSupport"
+        KC_HTTP_ENABLED: "true"
+        KC_HTTP_PORT: "8080"
+        KC_HOSTNAME_STRICT: "false"
+        KC_PROXY_HEADERS: "xforwarded"
+        # First-boot admin account (Keycloak 26 bootstrap vars). Without these
+        # start-dev provisions no admin and the console is unusable.
+        KC_BOOTSTRAP_ADMIN_USERNAME: "admin"
+        KC_BOOTSTRAP_ADMIN_PASSWORD: "nexlayer2024"
+        JAVA_OPTS_APPEND: "-XX:MaxRAMPercentage=75.0 -XX:+UseContainerSupport"
