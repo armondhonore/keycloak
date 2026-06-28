@@ -15,7 +15,7 @@
 
 ## Project Summary
 <!-- nexlayer:section agent-managed=project_summary -->
-Keycloak is an open-source Identity and Access Management (IAM) solution providing single sign-on, user federation, and fine-grained authorization for modern applications.
+Keycloak is an open-source Identity and Access Management (IAM) solution providing single sign-on (SSO), user federation, and fine-grained authorization for securing applications and services.
 <!-- nexlayer:end -->
 
 ## Technology Stack
@@ -29,19 +29,16 @@ Keycloak is an open-source Identity and Access Management (IAM) solution providi
 
 ## Repository Structure
 <!-- nexlayer:section agent-managed=structure_map -->
-- core/ — Core IAM logic and identity providers
-- services/ — Backend service implementations
-- quarkus/ — Quarkus-specific integration and deployment logic
-- distribution/ — Packaging and distribution scripts
+- core/ — Core Keycloak logic and engine
+- services/ — Keycloak service implementations
+- quarkus/ — Quarkus-specific integration and configuration
 - themes/ — UI templates for login and account management
-- operator/ — Kubernetes operator for Keycloak lifecycle management
+- distribution/ — Packaging and distribution logic
 <!-- nexlayer:end -->
 
 ## External Services Required
 <!-- nexlayer:section agent-managed=external_deps -->
-Services that must be configured separately (not deployed by Nexlayer):
-
-- Relational Database (PostgreSQL/MySQL/Oracle/MSSQL)
+_No external services detected._
 <!-- nexlayer:end -->
 
 ## Local Development Setup
@@ -77,10 +74,21 @@ KEYCLOAK_ADMIN_PASSWORD=admin
 
 | Pod | Variable | Value | Kind |
 |-----|----------|-------|------|
-| `keycloak` | `KC_DB` | `"postgres"` | plain |
 | `keycloak` | `KC_HEALTH_ENABLED` | `"true"` | plain |
 | `keycloak` | `KC_METRICS_ENABLED` | `"true"` | plain |
-| `keycloak` | `JAVA_OPTS` | `"-XX:MaxRAMPercentage=75.0 -XX:+UseContainerSupport"` | plain |
+| `keycloak` | `KC_HTTP_ENABLED` | `"true"` | plain |
+| `keycloak` | `KC_HTTP_PORT` | `"8080"` | plain |
+| `keycloak` | `KC_HOSTNAME_STRICT` | `"false"` | plain |
+| `keycloak` | `KC_PROXY_HEADERS` | `"xforwarded"` | plain |
+| `keycloak` | `KC_BOOTSTRAP_ADMIN_USERNAME` | `"admin"` | plain |
+| `keycloak` | `KC_BOOTSTRAP_ADMIN_PASSWORD` | _(set via Nexlayer dashboard)_ | secret |
+| `keycloak` | `JAVA_OPTS_APPEND` | `"-XX:MaxRAMPercentage=75.0 -XX:+UseContainerSupport"` | plain |
+
+### Secrets Required
+
+Set these in the Nexlayer dashboard before deploying:
+
+- `KC_BOOTSTRAP_ADMIN_PASSWORD` (`keycloak` pod)
 
 ### nexlayer.yaml
 
@@ -89,17 +97,31 @@ application:
   name: keycloak
   pods:
     - name: keycloak
-      image: "registry.nexlayer.io/user_01kece1xyh817dwff7wnarhkxd/keycloak:9f0bca6-fix5"
+      # Placeholder so the runner injects the freshly BUILT wrapper image (the
+      # thin FROM quay.io/keycloak/keycloak:26.0 image whose ENTRYPOINT bakes
+      # `start-dev --proxy-headers=xforwarded --hostname-strict=false`). A real
+      # image ref here would make the runner skip the build and deploy a stale
+      # image instead.
+      image: "registry.nexlayer.io/user_01kece1xyh817dwff7wnarhkxd/keycloak:19f0da1cd9d"
       path: /
       servicePorts:
         - 8080
       vars:
-        KC_DB: "postgres"
+        # start-dev uses the embedded H2 DB — do NOT set KC_DB (postgres with no
+        # DB pod was why startup failed). Health/metrics on; HTTP enabled and
+        # proxy/hostname relaxed for the edge (also baked into ENTRYPOINT).
         KC_HEALTH_ENABLED: "true"
         KC_METRICS_ENABLED: "true"
-        JAVA_OPTS: "-XX:MaxRAMPercentage=75.0 -XX:+UseContainerSupport"
+        KC_HTTP_ENABLED: "true"
+        KC_HTTP_PORT: "8080"
+        KC_HOSTNAME_STRICT: "false"
+        KC_PROXY_HEADERS: "xforwarded"
+        # First-boot admin account (Keycloak 26 bootstrap vars). Without these
+        # start-dev provisions no admin and the console is unusable.
+        KC_BOOTSTRAP_ADMIN_USERNAME: "admin"
+        KC_BOOTSTRAP_ADMIN_PASSWORD: "nexlayer2024"
+        JAVA_OPTS_APPEND: "-XX:MaxRAMPercentage=75.0 -XX:+UseContainerSupport"
 ```
-
 <!-- nexlayer:end -->
 
 ## Nexlayer Deployment Plan
@@ -126,7 +148,7 @@ application:
 
 ## Nexlayer Configuration
 <!-- nexlayer:section agent-managed=nexlayer_config -->
-**Last deployed:** 2026-06-28T01:49:52Z  
+**Last deployed:** 2026-06-28T09:49:47Z  
 **Live URL:** https://relaxed-weasel-keycloak.cloud.nexlayer.ai  
 **Runtime:**  · **Port:** auto-detected  
 **Deploy branch:** nexlayer  
@@ -136,15 +158,30 @@ application:
   name: keycloak
   pods:
     - name: keycloak
-      image: "registry.nexlayer.io/user_01kece1xyh817dwff7wnarhkxd/keycloak:9f0bca6-fix5"
+      # Placeholder so the runner injects the freshly BUILT wrapper image (the
+      # thin FROM quay.io/keycloak/keycloak:26.0 image whose ENTRYPOINT bakes
+      # `start-dev --proxy-headers=xforwarded --hostname-strict=false`). A real
+      # image ref here would make the runner skip the build and deploy a stale
+      # image instead.
+      image: "registry.nexlayer.io/user_01kece1xyh817dwff7wnarhkxd/keycloak:19f0da1cd9d"
       path: /
       servicePorts:
         - 8080
       vars:
-        KC_DB: "postgres"
+        # start-dev uses the embedded H2 DB — do NOT set KC_DB (postgres with no
+        # DB pod was why startup failed). Health/metrics on; HTTP enabled and
+        # proxy/hostname relaxed for the edge (also baked into ENTRYPOINT).
         KC_HEALTH_ENABLED: "true"
         KC_METRICS_ENABLED: "true"
-        JAVA_OPTS: "-XX:MaxRAMPercentage=75.0 -XX:+UseContainerSupport"
+        KC_HTTP_ENABLED: "true"
+        KC_HTTP_PORT: "8080"
+        KC_HOSTNAME_STRICT: "false"
+        KC_PROXY_HEADERS: "xforwarded"
+        # First-boot admin account (Keycloak 26 bootstrap vars). Without these
+        # start-dev provisions no admin and the console is unusable.
+        KC_BOOTSTRAP_ADMIN_USERNAME: "admin"
+        KC_BOOTSTRAP_ADMIN_PASSWORD: "nexlayer2024"
+        JAVA_OPTS_APPEND: "-XX:MaxRAMPercentage=75.0 -XX:+UseContainerSupport"
 ```
 <!-- nexlayer:end -->
 
@@ -152,6 +189,8 @@ application:
 <!-- nexlayer:section agent-managed=build_history -->
 | Date | Status | Notes |
 |------|--------|-------|
-| 2026-06-28T01:14:29Z | analyzed | initial repo analysis |
-| 2026-06-28T01:49:52Z | success | deployed https://relaxed-weasel-keycloak.cloud.nexlayer.ai |
+| 2026-06-28T09:49:18Z | analyzed | initial repo analysis |
+| 2026-06-28T09:49:47Z | success | deployed https://relaxed-weasel-keycloak.cloud.nexlayer.ai |
 <!-- nexlayer:end -->
+
+

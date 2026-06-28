@@ -7,7 +7,7 @@ application:
       # `start-dev --proxy-headers=xforwarded --hostname-strict=false`). A real
       # image ref here would make the runner skip the build and deploy a stale
       # image instead.
-      image: "# filled by pipeline"
+      image: "registry.nexlayer.io/user_01kece1xyh817dwff7wnarhkxd/keycloak:19f0da1cd9d"
       path: /
       servicePorts:
         - 8080
