@@ -15,7 +15,7 @@
 
 ## Project Summary
 <!-- nexlayer:section agent-managed=project_summary -->
-Keycloak is an open-source Identity and Access Management (IAM) solution providing single sign-on (SSO), user federation, and fine-grained authorization for securing applications and services.
+Keycloak is an open-source Identity and Access Management (IAM) solution providing authentication, authorization, and user federation for modern applications.
 <!-- nexlayer:end -->
 
 ## Technology Stack
@@ -23,22 +23,24 @@ Keycloak is an open-source Identity and Access Management (IAM) solution providi
 | Name | Kind | Version | Detected From |
 |------|------|---------|---------------|
 | Java | language | 17 | pom.xml |
-| Quarkus | framework | 3.33.2.1 | pom.xml |
-| Maven | build | 3.9.8 | pom.xml |
+| Quarkus | framework | 3.x | quarkus/ |
+| Maven | build | 3.9 | pom.xml, mvnw |
 <!-- nexlayer:end -->
 
 ## Repository Structure
 <!-- nexlayer:section agent-managed=structure_map -->
-- core/ — Core Keycloak logic and engine
-- services/ — Keycloak service implementations
-- quarkus/ — Quarkus-specific integration and configuration
-- themes/ — UI templates for login and account management
-- distribution/ — Packaging and distribution logic
+- core/ — Core IAM logic and authentication engines
+- services/ — Backend service implementations
+- quarkus/ — Quarkus-based runtime configuration
+- distribution/ — Packaging and build scripts
+- themes/ — UI customization and templates
 <!-- nexlayer:end -->
 
 ## External Services Required
 <!-- nexlayer:section agent-managed=external_deps -->
-_No external services detected._
+Services that must be configured separately (not deployed by Nexlayer):
+
+- PostgreSQL (Required for persistence)
 <!-- nexlayer:end -->
 
 ## Local Development Setup
@@ -74,6 +76,7 @@ KEYCLOAK_ADMIN_PASSWORD=admin
 
 | Pod | Variable | Value | Kind |
 |-----|----------|-------|------|
+| `keycloak` | `KC_DB` | `"dev-file"` | plain |
 | `keycloak` | `KC_HEALTH_ENABLED` | `"true"` | plain |
 | `keycloak` | `KC_METRICS_ENABLED` | `"true"` | plain |
 | `keycloak` | `KC_HTTP_ENABLED` | `"true"` | plain |
@@ -102,14 +105,15 @@ application:
       # `start-dev --proxy-headers=xforwarded --hostname-strict=false`). A real
       # image ref here would make the runner skip the build and deploy a stale
       # image instead.
-      image: "registry.nexlayer.io/user_01kece1xyh817dwff7wnarhkxd/keycloak:19f0da1cd9d"
+      image: "registry.nexlayer.io/user_01kece1xyh817dwff7wnarhkxd/keycloak:19f0da5ebde"
       path: /
       servicePorts:
         - 8080
       vars:
-        # start-dev uses the embedded H2 DB — do NOT set KC_DB (postgres with no
-        # DB pod was why startup failed). Health/metrics on; HTTP enabled and
-        # proxy/hostname relaxed for the edge (also baked into ENTRYPOINT).
+        # Force the embedded H2 dev DB. The base keycloak:26.0 image has a
+        # persisted db=postgres build option, so without this start-dev tries a
+        # non-existent postgres and crashes. dev-file = no external DB pod.
+        KC_DB: "dev-file"
         KC_HEALTH_ENABLED: "true"
         KC_METRICS_ENABLED: "true"
         KC_HTTP_ENABLED: "true"
@@ -148,7 +152,7 @@ application:
 
 ## Nexlayer Configuration
 <!-- nexlayer:section agent-managed=nexlayer_config -->
-**Last deployed:** 2026-06-28T09:49:47Z  
+**Last deployed:** 2026-06-28T09:55:22Z  
 **Live URL:** https://relaxed-weasel-keycloak.cloud.nexlayer.ai  
 **Runtime:**  · **Port:** auto-detected  
 **Deploy branch:** nexlayer  
@@ -163,14 +167,15 @@ application:
       # `start-dev --proxy-headers=xforwarded --hostname-strict=false`). A real
       # image ref here would make the runner skip the build and deploy a stale
       # image instead.
-      image: "registry.nexlayer.io/user_01kece1xyh817dwff7wnarhkxd/keycloak:19f0da1cd9d"
+      image: "registry.nexlayer.io/user_01kece1xyh817dwff7wnarhkxd/keycloak:19f0da5ebde"
       path: /
       servicePorts:
         - 8080
       vars:
-        # start-dev uses the embedded H2 DB — do NOT set KC_DB (postgres with no
-        # DB pod was why startup failed). Health/metrics on; HTTP enabled and
-        # proxy/hostname relaxed for the edge (also baked into ENTRYPOINT).
+        # Force the embedded H2 dev DB. The base keycloak:26.0 image has a
+        # persisted db=postgres build option, so without this start-dev tries a
+        # non-existent postgres and crashes. dev-file = no external DB pod.
+        KC_DB: "dev-file"
         KC_HEALTH_ENABLED: "true"
         KC_METRICS_ENABLED: "true"
         KC_HTTP_ENABLED: "true"
@@ -189,8 +194,9 @@ application:
 <!-- nexlayer:section agent-managed=build_history -->
 | Date | Status | Notes |
 |------|--------|-------|
-| 2026-06-28T09:49:18Z | analyzed | initial repo analysis |
-| 2026-06-28T09:49:47Z | success | deployed https://relaxed-weasel-keycloak.cloud.nexlayer.ai |
+| 2026-06-28T09:53:47Z | analyzed | initial repo analysis |
+| 2026-06-28T09:55:22Z | success | deployed https://relaxed-weasel-keycloak.cloud.nexlayer.ai |
 <!-- nexlayer:end -->
+
 
 
