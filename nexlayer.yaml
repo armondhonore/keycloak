@@ -17,7 +17,7 @@ application:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: nexlayer2024
   - name: postgres
-    image: postgres:16-alpine
+    image: mirror.gcr.io/library/postgres:16-alpine
     servicePorts:
     - 5432
     vars:
