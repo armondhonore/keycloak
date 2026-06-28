@@ -4,19 +4,18 @@ application:
   - name: app
     image: quay.io/keycloak/keycloak:latest
     path: /
+    command: sh -c "/opt/keycloak/bin/kc.sh start-dev --http-enabled=true --http-port=8080 --hostname=https://relaxed-weasel-keycloak.cloud.nexlayer.ai --hostname-strict=false --proxy-headers=xforwarded"
     servicePorts:
     - 8080
     vars:
       KC_DB: postgres
-      KC_DB_URL: "jdbc:postgresql://postgres.pod:5432/keycloak"
+      KC_DB_URL: "jdbc:postgresql://keycloak-postgres.pod:5432/keycloak"
       KC_DB_USERNAME: keycloak
-      KC_DB_PASSWORD: keycloak
+      KC_DB_PASSWORD: "${POSTGRES_PASSWORD}"
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: nexlayer2024
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: nexlayer2024
-      KC_HOSTNAME: "relaxed-weasel-keycloak.cloud.nexlayer.ai"
-      KC_HOSTNAME_STRICT: "false"
-      KC_HTTP_ENABLED: "true"
-      KC_PROXY: edge
   - name: postgres
     image: postgres:16-alpine
     servicePorts:
@@ -24,7 +23,7 @@ application:
     vars:
       POSTGRES_DB: keycloak
       POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: keycloak
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
     volumes:
     - name: keycloak-db
       mountPath: /var/lib/postgresql/data
