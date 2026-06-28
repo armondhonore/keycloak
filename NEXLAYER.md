@@ -15,7 +15,7 @@
 
 ## Project Summary
 <!-- nexlayer:section agent-managed=project_summary -->
-Keycloak is an open-source Identity and Access Management (IAM) solution providing single sign-on, user federation, and fine-grained authorization.
+Keycloak is an open-source Identity and Access Management (IAM) solution providing single sign-on (SSO), user federation, and fine-grained authorization for securing applications and services.
 <!-- nexlayer:end -->
 
 ## Technology Stack
@@ -29,12 +29,11 @@ Keycloak is an open-source Identity and Access Management (IAM) solution providi
 
 ## Repository Structure
 <!-- nexlayer:section agent-managed=structure_map -->
-- core/ — Core Keycloak logic
-- services/ — Internal service implementations
-- rest/ — REST API endpoints
-- themes/ — UI templates and assets
-- operator/ — Kubernetes operator logic
-- distribution/ — Packaging and distribution scripts
+- core/ — Core Keycloak logic and engine
+- services/ — Keycloak service implementations
+- quarkus/ — Quarkus-specific integration and configuration
+- themes/ — UI templates for login and account management
+- distribution/ — Packaging and distribution logic
 <!-- nexlayer:end -->
 
 ## External Services Required
@@ -103,7 +102,7 @@ application:
       # `start-dev --proxy-headers=xforwarded --hostname-strict=false`). A real
       # image ref here would make the runner skip the build and deploy a stale
       # image instead.
-      image: "registry.nexlayer.io/user_01kece1xyh817dwff7wnarhkxd/keycloak:19f0d9afcbb"
+      image: "registry.nexlayer.io/user_01kece1xyh817dwff7wnarhkxd/keycloak:19f0da1cd9d"
       path: /
       servicePorts:
         - 8080
@@ -149,7 +148,7 @@ application:
 
 ## Nexlayer Configuration
 <!-- nexlayer:section agent-managed=nexlayer_config -->
-**Last deployed:** 2026-06-28T09:43:14Z  
+**Last deployed:** 2026-06-28T09:49:47Z  
 **Live URL:** https://relaxed-weasel-keycloak.cloud.nexlayer.ai  
 **Runtime:**  · **Port:** auto-detected  
 **Deploy branch:** nexlayer  
@@ -164,7 +163,7 @@ application:
       # `start-dev --proxy-headers=xforwarded --hostname-strict=false`). A real
       # image ref here would make the runner skip the build and deploy a stale
       # image instead.
-      image: "registry.nexlayer.io/user_01kece1xyh817dwff7wnarhkxd/keycloak:19f0d9afcbb"
+      image: "registry.nexlayer.io/user_01kece1xyh817dwff7wnarhkxd/keycloak:19f0da1cd9d"
       path: /
       servicePorts:
         - 8080
@@ -190,7 +189,8 @@ application:
 <!-- nexlayer:section agent-managed=build_history -->
 | Date | Status | Notes |
 |------|--------|-------|
-| 2026-06-28T09:41:50Z | analyzed | initial repo analysis |
-| 2026-06-28T09:43:14Z | success | deployed https://relaxed-weasel-keycloak.cloud.nexlayer.ai |
+| 2026-06-28T09:49:18Z | analyzed | initial repo analysis |
+| 2026-06-28T09:49:47Z | success | deployed https://relaxed-weasel-keycloak.cloud.nexlayer.ai |
 <!-- nexlayer:end -->
+
 
